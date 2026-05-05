@@ -1,0 +1,8 @@
+beeper/beeper
+gpg-keys/*
+!gpg-keys/.gitkeep
+config/docker-compose.local.yml
+config/codex-notifier
+config/.env
+config/custom-bin/*
+!config/custom-bin/.gitkeep

@@ -1,0 +1,64 @@
+#!/bin/bash
+# Run codex inside the Docker container in the current working directory.
+# Usage: codex-docker [codex args...]
+set -euo pipefail
+
+CONTAINER="${CODEX_DOCKER_CONTAINER:-codex-docker}"
+WORKDIR="$(pwd)"
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONFIG_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/config"
+
+# Load .env early so HOST_USER is available when invoked directly (not via ctrl).
+if [[ -f "$CONFIG_DIR/.env" ]]; then
+  while IFS= read -r _cdenv_line || [[ -n "$_cdenv_line" ]]; do
+    [[ "$_cdenv_line" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "${_cdenv_line// /}" ]] && continue
+    _cdenv_key="${_cdenv_line%%=*}"; _cdenv_val="${_cdenv_line#*=}"
+    [[ -z "${!_cdenv_key:-}" ]] && export "$_cdenv_key=$_cdenv_val"
+  done < "$CONFIG_DIR/.env"
+  unset _cdenv_line _cdenv_key _cdenv_val
+fi
+
+DOCKER_USER="${CODEX_DOCKER_USER:-${HOST_USER:-$(whoami)}}"
+
+source "$SCRIPT_DIR/lib/session-cleanup.sh"
+
+die() { echo "Error: $1" >&2; exit 1; }
+
+# Check Docker daemon is running
+docker info >/dev/null 2>&1 \
+  || die "Docker is not running."
+
+# Check container exists and is running
+STATUS=$(docker inspect --format '{{.State.Status}}' "$CONTAINER" 2>/dev/null) \
+  || die "Container '$CONTAINER' does not exist. Run: codex-docker-ctrl start"
+[[ "$STATUS" == "running" ]] \
+  || die "Container '$CONTAINER' is $STATUS. Run: codex-docker-ctrl start"
+
+# Check current directory is mounted in the container
+MOUNTS=$(docker inspect --format '{{range .Mounts}}{{.Source}} {{end}}' "$CONTAINER")
+MOUNTED=false
+for src in $MOUNTS; do
+  [[ "$WORKDIR" == "$src" || "$WORKDIR" == "$src/"* ]] && MOUNTED=true && break
+done
+$MOUNTED || die "Directory '$WORKDIR' is not mounted in container.
+Add it to config/docker-compose.local.yml volumes."
+
+DOCKER_FLAGS=(-i)
+if [[ -t 0 && -t 1 ]]; then
+  DOCKER_FLAGS=(-it)
+fi
+
+SESSION_ID="$$-$RANDOM-$(date +%s)"
+start_session_watchdog "$CONTAINER" "$SESSION_ID" "$$"
+
+docker exec "${DOCKER_FLAGS[@]}" \
+  -e "CODEX_SESSION_ID=$SESSION_ID" \
+  -u "$DOCKER_USER" -w "$WORKDIR" "$CONTAINER" \
+  codex-session "$@"
+EXIT_CODE=$?
+
+run_session_cleanup "$CONTAINER" "$SESSION_ID"
+
+exit $EXIT_CODE

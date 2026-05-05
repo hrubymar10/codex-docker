@@ -1,0 +1,88 @@
+services:
+  socket-proxy:
+    image: wollomatic/socket-proxy:1
+    container_name: codex-socket-proxy
+    command:
+      - '-listenip=0.0.0.0'
+      - '-allowfrom=codex-filter-proxy'
+      - '-allowGET=/(v1\..{1,2}/)?(version|info|containers(/.*)?|images(/.*)?|networks(/.*)?|volumes(/.*)?|build.*|exec/.*|events.*|_ping)'
+      - '-allowPOST=/(v1\..{1,2}/)?(containers(/.*)?|images(/.*)?|networks(/.*)?|volumes(/.*)?|build.*|exec/.*|_ping)'
+      - '-allowPUT=/(v1\..{1,2}/)?(containers(/.*)?)'
+      - '-allowDELETE=/(v1\..{1,2}/)?(containers(/.*)?|images(/.*)?|networks(/.*)?|volumes(/.*)?)'
+      - '-allowHEAD=/(v1\..{1,2}/)?(containers(/.*)?|images(/.*)?|_ping)'
+      - '-allowbindmountfrom=${ALLOWED_BIND_MOUNTS}'
+      - '-loglevel=INFO'
+    user: '0'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - codex-internal-net
+    read_only: true
+    tmpfs:
+      - /run
+    restart: unless-stopped
+
+  filter-proxy:
+    container_name: codex-filter-proxy
+    build:
+      context: ./docker-filter-proxy
+    environment:
+      DOCKER_FILTER_UPSTREAM: http://codex-socket-proxy:2375
+      DOCKER_FILTER_LISTEN: 0.0.0.0:2375
+    depends_on:
+      - socket-proxy
+    networks:
+      - codex-internal-net
+      - codex-net
+    read_only: true
+    restart: unless-stopped
+
+  codex:
+    container_name: codex-docker
+    init: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        HOST_UID: ${HOST_UID}
+        HOST_USER: ${HOST_USER}
+        HOST_HOME: ${HOST_HOME}
+        GO_VERSION: ${GO_VERSION}
+        CONTAINER_SHELL: ${CONTAINER_SHELL:-/bin/bash}
+        EXTRA_PACKAGES: ${EXTRA_PACKAGES:-}
+        CODEX_VERSION: ${CODEX_VERSION:-}
+    volumes:
+      - ${CODEX_HOME_HOST}:${CODEX_HOME_HOST}
+      - ${GOPATH}/pkg:${HOST_HOME}/go/pkg
+      - ./gpg-keys:/run/gpg-keys:ro
+      - ./config/codex-notifier:/usr/local/bin/codex-notifier:ro
+      - ./config/custom-bin:/usr/local/custom-bin:ro
+    working_dir: ${HOST_HOME}
+    environment:
+      DOCKER_HOST: tcp://codex-filter-proxy:2375
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GIT_USER_NAME: ${GIT_USER_NAME:-}
+      GIT_USER_EMAIL: ${GIT_USER_EMAIL:-}
+      GIT_PROTECTED_BRANCHES: ${GIT_PROTECTED_BRANCHES:-main master}
+      GOPRIVATE: ${GOPRIVATE:-}
+      GONOSUMDB: ${GONOSUMDB:-}
+      GOPATH: ${HOST_HOME}/go
+      HOST_USER: ${HOST_USER}
+      HOST_HOME: ${HOST_HOME}
+      CODEX_HOME: ${CODEX_HOME_HOST}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SSH_RELAY_HOST: ${SSH_RELAY_HOST:-}
+      SSH_RELAY_PORT: ${SSH_RELAY_PORT:-}
+      SSH_AUTH_SOCK: /tmp/ssh-agent.sock
+      CONTAINER_SHELL: ${CONTAINER_SHELL:-/bin/bash}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    mem_limit: ${DOCKER_MEMORY_LIMIT:-0}
+    depends_on:
+      - filter-proxy
+    networks:
+      - codex-net
+
+networks:
+  codex-internal-net:
+  codex-net:

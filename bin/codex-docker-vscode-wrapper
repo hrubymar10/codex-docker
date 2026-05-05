@@ -1,0 +1,10 @@
+#!/bin/bash
+# VS Code wrapper for the OpenAI Codex VS Code extension.
+#
+# The extension launches the configured binary as the Codex command. We forward
+# everything to codex-docker so codex runs inside the container instead of on
+# the host.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/codex-docker" "$@"
