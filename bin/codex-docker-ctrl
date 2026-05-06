@@ -13,6 +13,8 @@ if [[ -f "$CONFIG_DIR/.env" ]]; then
     [[ "$_cdenv_line" =~ ^[[:space:]]*# ]] && continue
     [[ -z "${_cdenv_line// /}" ]] && continue
     _cdenv_key="${_cdenv_line%%=*}"; _cdenv_val="${_cdenv_line#*=}"
+    if   [[ "$_cdenv_val" == '"'*'"' ]]; then _cdenv_val="${_cdenv_val#\"}"; _cdenv_val="${_cdenv_val%\"}"
+    elif [[ "$_cdenv_val" == "'"*"'" ]]; then _cdenv_val="${_cdenv_val#\'}"; _cdenv_val="${_cdenv_val%\'}"; fi
     [[ -z "${!_cdenv_key:-}" ]] && export "$_cdenv_key=$_cdenv_val"
   done < "$CONFIG_DIR/.env"
   unset _cdenv_line _cdenv_key _cdenv_val
@@ -217,6 +219,8 @@ setup_env() {
       [[ -z "${line// /}" ]] && continue
       local key="${line%%=*}"
       local val="${line#*=}"
+      if   [[ "$val" == '"'*'"' ]]; then val="${val#\"}"; val="${val%\"}"
+      elif [[ "$val" == "'"*"'" ]]; then val="${val#\'}"; val="${val%\'}"; fi
       if [[ -z "${!key:-}" ]]; then
         export "$key=$val"
       fi
