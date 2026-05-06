@@ -56,7 +56,7 @@ start_session_watchdog "$CONTAINER" "$SESSION_ID" "$$"
 docker exec "${DOCKER_FLAGS[@]}" \
   -e "CODEX_SESSION_ID=$SESSION_ID" \
   -u "$DOCKER_USER" -w "$WORKDIR" "$CONTAINER" \
-  codex-session "$@"
+  codex-session --dangerously-bypass-approvals-and-sandbox "$@"
 EXIT_CODE=$?
 
 run_session_cleanup "$CONTAINER" "$SESSION_ID"
