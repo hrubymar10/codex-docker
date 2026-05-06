@@ -72,6 +72,20 @@ else
 fi
 
 echo
+echo "═══ login shell PATH preservation ═══"
+if grep -q 'COPY scripts/profile-path.sh   /etc/profile.d/codex-path.sh' Dockerfile; then
+  ok "Dockerfile installs login-shell PATH fix"
+else
+  fail "Dockerfile missing login-shell PATH fix"
+fi
+
+if grep -q '/usr/local/go/bin' scripts/profile-path.sh && grep -q '/usr/local/custom-bin' scripts/profile-path.sh; then
+  ok "profile PATH fix restores Go and custom bin locations"
+else
+  fail "profile PATH fix missing expected tool paths"
+fi
+
+echo
 echo "═══════════════════════════════"
 echo "Results: $PASS passed, $FAIL failed"
 [[ $FAIL -eq 0 ]] && echo "ALL TESTS PASSED" || { echo "SOME TESTS FAILED"; exit 1; }

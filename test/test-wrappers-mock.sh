@@ -94,7 +94,7 @@ echo "═══ mocked codex-docker wrapper ═══"
   "$ROOT/bin/codex-docker" --version > "$TMP_ROOT/codex-docker.out"
 )
 
-if grep -Eq 'exec -i .*CODEX_SESSION_ID=.* -u tester -w .*/work/project codex-docker codex-session --version' "$LOG"; then
+if grep -Eq 'exec -i .*CODEX_SESSION_ID=.* -u tester -w .*/work/project codex-docker codex-session --dangerously-bypass-approvals-and-sandbox --version' "$LOG"; then
   ok "codex-docker forwards args and session env"
 else
   fail "codex-docker did not emit expected docker exec call"
