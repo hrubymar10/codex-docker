@@ -50,6 +50,7 @@ services:
         GO_VERSION: ${GO_VERSION}
         CONTAINER_SHELL: ${CONTAINER_SHELL:-/bin/bash}
         EXTRA_PACKAGES: ${EXTRA_PACKAGES:-}
+        EXTRA_GO_PACKAGES: ${EXTRA_GO_PACKAGES:-}
         CODEX_VERSION: ${CODEX_VERSION:-}
     volumes:
       - ${CODEX_HOME_HOST}:${CODEX_HOME_HOST}
