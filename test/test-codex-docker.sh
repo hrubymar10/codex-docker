@@ -64,11 +64,29 @@ fi
 rm -f "/tmp/codex-session-${SESSION_ID}.pid" /tmp/codex-session-cleanup-test.sh
 
 echo
-echo "═══ codex-session foreground exec ═══"
-if grep -q '^exec codex "\$@"$' scripts/codex-session.sh; then
-  ok "codex-session runs codex in the foreground"
+echo "═══ codex-session teardown wrapper ═══"
+if grep -q '^trap cleanup HUP TERM INT EXIT$' scripts/codex-session.sh \
+  && grep -q '^exec 3<&0$' scripts/codex-session.sh \
+  && grep -q '^codex "\$@" <&3 &$' scripts/codex-session.sh \
+  && grep -q '^wait "\$CODEX_PID" 2>/dev/null$' scripts/codex-session.sh; then
+  ok "codex-session keeps a supervising shell around codex"
 else
-  fail "codex-session missing foreground exec"
+  fail "codex-session missing supervising-shell teardown logic"
+fi
+
+echo
+echo "═══ detached session watchdog ═══"
+if grep -q '^_spawn_detached() {$' bin/lib/session-cleanup.sh \
+  && grep -q 'command -v setsid' bin/lib/session-cleanup.sh \
+  && grep -q 'os\.setsid()' bin/lib/session-cleanup.sh \
+  && grep -q 'POSIX qw(setsid)' bin/lib/session-cleanup.sh \
+  && grep -q '_spawn_detached ' bin/lib/session-cleanup.sh \
+  && grep -q 'sleep 0.5' bin/lib/session-cleanup.sh \
+  && grep -q 'attempt < 20' bin/lib/session-cleanup.sh \
+  && grep -q 'sleep 0.25' bin/lib/session-cleanup.sh; then
+  ok "session watchdog is detached (portable fallback ladder) and polls quickly"
+else
+  fail "session watchdog missing portable detach ladder or fast poll"
 fi
 
 echo

@@ -12,6 +12,7 @@ This is the Codex sibling of [`claude-docker`](https://github.com/hrubymar10/cla
 - **Host identity mirroring** — same username, UID, home path, and preferred shell
 - **Shared codex state** — mounts your `~/.codex/` directory, so auth, sessions, and config (`auth.json`, `config.toml`, history) are reused
 - **Consistent tool PATHs** — login shells keep image-installed tools like `codex`, `go`, and custom wrappers on `PATH`
+- **Session teardown for terminal and IDE callers** — host watchdog plus in-container wrapper clean up orphaned codex processes even when the parent wrapper dies early
 - **Git safety rails** — blocks pushes to protected branches from inside the container
 - **Optional GPG import** — import signing keys into the container at startup
 - **Optional notifier hook** — mount a custom `codex-notifier` script into the container for sound/desktop notifications
