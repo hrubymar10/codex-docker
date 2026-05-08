@@ -203,6 +203,21 @@ codex-docker --model gpt-5
 codex-docker --sandbox workspace-write
 ```
 
+## SSH Agent Forwarding
+
+Codex inside the container can use your host SSH agent for git pushes, `ssh` connections, etc. — no private keys are copied into the container.
+
+If `SSH_AUTH_SOCK` is set on the host (i.e. an `ssh-agent` is running), `codex-docker-ctrl start` automatically launches a `socat` TCP relay on `127.0.0.1:19922` that bridges the host's Unix-domain agent socket. Inside the container, `SSH_AUTH_SOCK` is configured to point at the relay over `host.docker.internal`, and `~/.ssh/known_hosts` is bind-mounted in. Use `ssh-add -l` inside the container to confirm the agent is reachable.
+
+### Setup
+
+1. Install `socat` on the host. On macOS: `brew install socat`. On Linux: install via your package manager.
+2. Make sure your SSH agent is running on the host — `echo "$SSH_AUTH_SOCK"` should print a path.
+3. Add your key once: `ssh-add ~/.ssh/id_ed25519` (or whichever key).
+4. Start (or restart) the container: `bin/codex-docker-ctrl start`.
+
+The relay starts on `codex-docker-ctrl start` and stops on `codex-docker-ctrl stop`. If `socat` isn't available on the host, the relay is skipped with a warning and the rest of the container still starts normally.
+
 ## Beeper
 
 Optional host-side HTTP server (`beeper/main.go`) that plays a sound when called. Started by `codex-docker-ctrl beeper-start`. Two env vars control access:
