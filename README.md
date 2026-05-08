@@ -142,10 +142,12 @@ codex-docker exec --dangerously-bypass-approvals-and-sandbox "summarize this rep
 
 ## VS Code
 
-Most VS Code Codex extensions launch a configured `codex` binary. Point the extension at the wrapper in this repo so it uses the container instead:
+Most VS Code Codex extensions launch a configured `codex` binary. Point the extension at the wrapper in this repo so it uses the container instead. For the official OpenAI Codex extension, set `chatgpt.cliExecutable` in `settings.json`:
 
-```
-/path/to/codex-docker/bin/codex-docker-vscode-wrapper
+```json
+{
+    "chatgpt.cliExecutable": "/path/to/codex-docker/bin/codex-docker-vscode-wrapper"
+}
 ```
 
 Make sure the container is running before launching the extension.
