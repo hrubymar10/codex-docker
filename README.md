@@ -4,6 +4,24 @@ Run the [OpenAI Codex CLI](https://github.com/openai/codex) inside an isolated D
 
 This is the Codex sibling of [`claude-docker`](https://github.com/hrubymar10/claude-docker) and [`pi-docker`](https://github.com/hrubymar10/pi-docker): same general security model, same path-mirroring idea, but adapted to Codex's config and auth model.
 
+## Scope: what this is, what it isn't
+
+This is an **opinionated** project tuned for the way I and my colleagues work day to day. The goal is to keep the daily Codex flow feeling exactly like running `codex` on the host — same paths, same git, same `docker compose` against your project's stack — while putting a soft blanket between Codex and the parts of your machine you'd rather it not touch by accident.
+
+**This is a safety net for *bad prompts*, not *bad actors*.**
+
+The threat model this project addresses is **AI mistakes** — the kind of footguns an LLM can stumble into when interpreting an ambiguous instruction, getting confused about state, or going overboard trying to be helpful. Concretely:
+
+- You're checked out on `master` without realizing it and prompt *"do the changes and push them"*. Codex tries `git push`, the wrapper refuses pushes to protected branches, and you (the human) decide whether to push from the host. No accidental force-push to `master` because Codex didn't pause to ask.
+- You write *"make REALLY sure that directory is gone"* and Codex, in its enthusiasm, reaches for `sudo rm -rf /`. The container is the blast radius — only your mounted project dirs are reachable, the host is untouched. Worst case you lose what you mounted, not your home directory.
+- A misread file path or runaway loop tries to write somewhere it shouldn't. The bind-mount allowlist confines damage to directories you explicitly opted in.
+
+The threat model this project does **not** address is a deliberately adversarial Codex — an LLM actively crafting multi-step attacks to break out of the sandbox, exfiltrate credentials via sibling containers, or otherwise behave like a hostile insider. If that's your threat model, this isn't the right tool: don't give Codex the Docker socket at all, don't bind-mount `~/.codex`, and consider air-gapped execution.
+
+The friction trade-off goes one way on purpose: **the sandbox must not get in our way**. Standard `docker compose up`, `docker compose exec`, debugger attach, language servers, and the rest of the daily-driver workflow all work without per-project allowlists or extra config. If a hardening proposal would block a legitimate developer flow, it's out of scope for this project — even if it would close a theoretical attack path.
+
+In short: paranoia calibrated to "AI mental breakdown", not to "nation-state in your chat window".
+
 ## Features
 
 - **Isolated execution** — codex runs in an Alpine container instead of directly on your host
