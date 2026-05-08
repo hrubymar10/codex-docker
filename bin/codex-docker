@@ -6,7 +6,15 @@ set -euo pipefail
 CONTAINER="${CODEX_DOCKER_CONTAINER:-codex-docker}"
 WORKDIR="$(pwd)"
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve symlinks so SCRIPT_DIR points at the real bin/ directory
+# even when invoked via /usr/local/bin/<symlink>.
+SCRIPT_PATH="$0"
+while [ -L "$SCRIPT_PATH" ]; do
+  link_dir="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+  SCRIPT_PATH="$(readlink "$SCRIPT_PATH")"
+  [[ "$SCRIPT_PATH" != /* ]] && SCRIPT_PATH="$link_dir/$SCRIPT_PATH"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 CONFIG_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/config"
 
 # Load .env early so HOST_USER is available when invoked directly (not via ctrl).
