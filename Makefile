@@ -58,6 +58,7 @@ test: ## Run host-side integration tests
 	@bash test/test-wrappers-mock.sh
 	@bash test/test-preflight-overrides.sh
 	@bash test/test-compose-config.sh
+	@bash test/test-git-wrapper.sh
 
 test-verbose: ## Run tests with bash -x tracing
 	@bash -x test/test-codex-docker.sh
@@ -65,6 +66,7 @@ test-verbose: ## Run tests with bash -x tracing
 	@bash -x test/test-wrappers-mock.sh
 	@bash -x test/test-preflight-overrides.sh
 	@bash -x test/test-compose-config.sh
+	@bash -x test/test-git-wrapper.sh
 
 lint: ## Run shell syntax checks
 	@bash -n bin/codex-docker bin/codex-docker-ctrl bin/codex-docker-vscode-wrapper bin/lib/session-cleanup.sh scripts/*.sh

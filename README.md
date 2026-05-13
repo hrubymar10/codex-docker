@@ -264,7 +264,7 @@ Instead:
 - dangerous container-create options are rejected
 - Docker socket bind mounts are stripped from downstream create requests
 - the in-container `docker` wrapper blocks dangerous subcommands like `run`, `build`, and `cp`
-- the in-container `git` wrapper blocks pushes to protected branches (`main`, `master` by default)
+- the in-container `git` wrapper blocks pushes to protected branches (`main`, `master` by default) and any `git push` that would publish tags (`--tags`, `--follow-tags`, `--mirror`, a `refs/tags/*` refspec, or the `<remote> tag <name>` shorthand)
 
 See [SECURITY_ISSUES.md](SECURITY_ISSUES.md) for known limitations.
 
