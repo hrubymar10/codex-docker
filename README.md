@@ -218,6 +218,36 @@ If `SSH_AUTH_SOCK` is set on the host (i.e. an `ssh-agent` is running), `codex-d
 
 The relay starts on `codex-docker-ctrl start` and stops on `codex-docker-ctrl stop`. If `socat` isn't available on the host, the relay is skipped with a warning and the rest of the container still starts normally.
 
+## GitLab CLI (glab) (Optional)
+
+The `glab` CLI is pre-installed, mirroring the bundled `gh` (GitHub CLI). The key thing to understand: the GitLab **API** — which is everything `glab` does (merge requests, pipelines, issues) — can only authenticate with a **token**, never an SSH key. SSH keys cover git transport only.
+
+So there are two independent layers:
+
+- **Git push/pull/clone** to GitLab — already works with **no token** via [SSH agent forwarding](#ssh-agent-forwarding). Nothing to configure beyond the agent.
+- **The `glab` CLI** — needs a token. There's no SSH-key path to the GitLab API (same as `gh`).
+
+### Setup
+
+1. Authenticate `glab` once **on the host** (OAuth web flow — no manual PAT needed):
+
+   ```bash
+   glab auth login --hostname gitlab.com --web
+   ```
+
+   Alternatively, set `GITLAB_TOKEN` in `config/.env` to a Personal Access Token with the `api` scope.
+
+2. Start (or rebuild) the container: `bin/codex-docker-ctrl start`. `codex-docker-ctrl` reads the host token via `glab config get token` and passes it into the container as `GITLAB_TOKEN`, where `glab` picks it up automatically.
+
+Git transport is left on SSH — no `git@gitlab.com:` → HTTPS rewrite is applied, so existing remotes keep using the forwarded agent. A credential helper is still configured for `https://$GITLAB_HOST`, so HTTPS remotes work too when a token is present.
+
+### Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `GITLAB_TOKEN` | `$(glab config get token --host gitlab.com)` | Token for the `glab` CLI. Auto-detected from the host glab, or set explicitly. |
+| `GITLAB_HOST` | `gitlab.com` | Set only for self-managed GitLab. |
+
 ## Beeper
 
 Optional host-side HTTP server (`beeper/main.go`) that plays a sound when called. Started by `codex-docker-ctrl beeper-start`. Two env vars control access:
