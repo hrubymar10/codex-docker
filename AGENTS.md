@@ -26,6 +26,7 @@
 - `scripts/docker-wrapper.sh` — blocks dangerous Docker subcommands in-container
 - `scripts/go-install.sh` — Dockerfile helper to download Go by version
 - `beeper/` — optional host-side HTTP beep server
+- `../aws-ai-proxy/` - optional independently running AWS credential proxy consumed when `AWS_AI_PROXY_ENABLED` is true (https://github.com/hrubymar10/aws-ai-proxy)
 - `docker-filter-proxy/` — extra validation layer in front of socket proxy
 - `config/docker-compose.local.example.yml` — local mount template
 - `config/.env.example` — environment template
@@ -54,6 +55,8 @@ bin/codex-docker-ctrl beeper-stop
 - Keep codex-specific behavior in codex-specific files
 - Backward compatibility is okay, but prefer codex-first names (`codex-notifier`, `CODEX_*` env vars, etc.)
 - Keep `COMPOSE_PROJECT_NAME` pinned so docker resource names do not depend on the checkout directory name
+- Docker repos are AWS proxy consumers only. Use `AWS_AI_PROXY_ENABLED` and `AWS_AI_PROXY_URL`; do not add proxy lifecycle management here.
+- Legacy `AWS_CRED_PROXY_PROFILES` / `AWS_CRED_PROXY_PORT` values are ignored. `bin/codex-docker-ctrl start` and `rebuild` detect them when `AWS_AI_PROXY_ENABLED` is not truthy, prompt only on a TTY, and warn without blocking non-interactive runs.
 - Update `README.md` when behavior changes
 - Preserve exact host path mirroring semantics
 - Preserve security defaults unless explicitly changing them
