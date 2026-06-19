@@ -131,7 +131,7 @@ AWSEOF
     cat >> "$AWS_CONFIG" <<AWSEOF
 
 [profile $PROFILE_NAME]
-credential_process = curl -sf $PROXY_URL/credentials/$PROFILE_NAME
+credential_process = curl -sf -H "X-Aws-Ai-Proxy-Client: codex-docker" $PROXY_URL/credentials/$PROFILE_NAME
 region = $PROFILE_REGION
 AWSEOF
   done
