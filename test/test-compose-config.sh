@@ -59,6 +59,12 @@ else
   fail "compose missing codex-docker container name"
 fi
 
+if grep -Fq '|grpc|session.*|' "$OUT"; then
+  ok "socket proxy allows BuildKit gRPC and session routes"
+else
+  fail "socket proxy missing BuildKit routes"
+fi
+
 echo
 echo "═══════════════════════════════"
 echo "Results: $PASS passed, $FAIL failed"
