@@ -123,6 +123,8 @@ COPY scripts/git-wrapper.sh    /usr/bin/git
 COPY scripts/docker-wrapper.sh /usr/bin/docker
 COPY scripts/codex-session.sh  /usr/local/bin/codex-session
 COPY scripts/entrypoint.sh     /usr/local/bin/entrypoint.sh
+COPY docker/gitignore-global   /etc/gitignore_global
+COPY docker/gitconfig-system   /etc/gitconfig
 COPY scripts/profile-path.sh   /etc/profile.d/codex-path.sh
 RUN chmod +x /usr/bin/git /usr/bin/docker /usr/local/bin/codex-session /usr/local/bin/entrypoint.sh /etc/profile.d/codex-path.sh
 
